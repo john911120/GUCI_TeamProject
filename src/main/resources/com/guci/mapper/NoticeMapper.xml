@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guci.mapper.NoticeMapper">
+	<select id="getList" resultType="com.guci.domain.NoticeVO">
+		SELECT * FROM GUCI_NOTICE WHERE NOTICENO > 0
+	</select>
+	
+	 <insert id="insert">
+	 	INSERT INTO GUCI_NOTICE (noticeNo, noticeTit, noticeCon, noticeWri)
+	 	VALUES (SEQ_NOTICE.NEXTVAL, #{noticeTit}, #{noticeCon}, #{noticeWri})
+	 </insert>
+
+	 <insert id="insertSelectKey">
+	 	<selectKey keyProperty="noticeNo" order="BEFORE" resultType="long">
+	 		SELECT SEQ_NOTICE.NEXTVAL FROM DUAL
+	 	</selectKey>
+	 	INSERT INTO GUCI_NOTICE (noticeNo, noticeTit, noticeCon, noticeWri)
+	 	VALUES (#{noticeNo}, #{noticeTit}, #{noticeCon}, #{noticeWri})
+	 </insert>
+		
+	
+	<select id="read" resultType="com.guci.domain.NoticeVO">
+		SELECT * FROM GUCI_NOTICE WHERE noticeNo = #{noticeNo}
+	</select>
+	
+	<delete id="delete">
+		DELETE FROM GUCI_NOTICE WHERE noticeNo = #{noticeNo}
+	</delete>
+	
+	<update id="update">
+		UPDATE GUCI_NOTICE
+		SET noticeTit = #{noticeTit},
+		noticeCon = #{noticeCon},
+		noticeWri = #{noticeWri},
+		noticeDate = sysdate
+		where noticeNo = #{noticeNo}
+	</update>
+	
+	   <select id="getListWithPaging" resultType="com.guci.domain.NoticeVO">
+  <![CDATA[ 
+  select noticeNo, noticeTit, noticeCon, noticeWri, noticeDate
+  from 
+  	( select /*+INDEX_DESC(guci_notice) */
+  	  rownum rn, noticeNo, noticeTit, noticeCon, noticeWri, noticeDate
+  	  from guci_notice
+  	  where 
+  ]]>
+	<include refid="criteria"></include>
+  <![CDATA[ 
+  	rownum <= #{pageNum} * #{amount}
+  	)
+  	where rn > (#{pageNum} -1) * #{amount}
+  ]]>
+  </select>
+  
+  
+  <!--  p323 -->
+  <select id="getTotalCount" resultType="int">
+  	select count(*) from guci_notice where
+  	<include refid="criteria"></include>
+  	 noticeNo > 0
+  </select>
+    <sql id="criteria">
+  	<trim prefix="(" suffix=") AND " prefixOverrides="OR">
+  		<foreach item='type' collection="typeArr">
+  			<trim prefix="OR">
+  				<choose>
+  					<when test="type == 'T'.toString()">
+  						title like '%'||#{keyword}||'%'
+  					</when>
+  					<when test="type == 'C'.toString()">
+  						content like '%'||#{keyword}||'%'
+  					</when>
+  					<when test="type == 'W'.toString()">
+  						writer like '%'||#{keyword}||'%'
+  					</when>
+  				</choose>
+  			</trim>
+  		</foreach>
+  	</trim>
+  </sql>
+</mapper>
